@@ -36,7 +36,6 @@ const addressOptions = [
           {
             label: '禁用',
             value: 'disabled',
-            disabled: true,
           },
           {
             label: '余杭',
@@ -109,7 +108,7 @@ const Demo = () => {
       </label>
       <Cascader
         style={{ width: 200 }}
-        // options={addressOptions}
+        options={addressOptions}
         onChange={onChange}
         checkable={multiple}
         allowClear
