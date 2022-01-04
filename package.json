@@ -1,13 +1,7 @@
 {
-<<<<<<< HEAD
   "name": "rc-cascader-plus",
   "version": "0.0.1",
-  "description": "based on rc-cascader@3.0.0-alpha.3",
-=======
-  "name": "rc-cascader",
-  "version": "3.0.0-alpha.4",
-  "description": "cascade select ui component for react",
->>>>>>> 72aaf1847c88a0b3d27df09bbfe6505cccd1e03f
+  "description": "based on rc-cascader@3.0.0-alpha.3, surpport beforeChange & limitArray (limit number of could be selected each level)",
   "keywords": [
     "react",
     "react-component",
