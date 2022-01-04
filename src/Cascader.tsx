@@ -70,6 +70,7 @@ interface BaseCascaderProps<OptionType extends BaseOptionType = DefaultOptionTyp
   defaultValue?: ValueType;
   changeOnSelect?: boolean;
   onChange?: (value: ValueType, selectedOptions?: OptionType[] | OptionType[][]) => void;
+  beforeChange?: (value: ValueType, selectedOptions?: OptionType[] | OptionType[][]) => void;
   displayRender?: (label: string[], selectedOptions?: OptionType[]) => React.ReactNode;
   checkable?: boolean | React.ReactNode;
 
@@ -86,6 +87,7 @@ interface BaseCascaderProps<OptionType extends BaseOptionType = DefaultOptionTyp
   /** @private Internal usage. Do not use in your production. */
   dropdownPrefixCls?: string;
   loadData?: (selectOptions: OptionType[]) => void;
+  limitedArray?: number[];
 
   // Open
   /** @deprecated Use `open` instead */
@@ -110,16 +112,25 @@ interface BaseCascaderProps<OptionType extends BaseOptionType = DefaultOptionTyp
 }
 
 type OnSingleChange<OptionType> = (value: SingleValueType, selectOptions: OptionType[]) => void;
+type BeforeSingleChange<OptionType> = (
+  value: SingleValueType,
+  selectOptions: OptionType[],
+) => boolean;
 type OnMultipleChange<OptionType> = (
   value: SingleValueType[],
   selectOptions: OptionType[][],
 ) => void;
 
+type BeforeMultipleChange<OptionType> = (
+  value: SingleValueType[],
+  selectOptions: OptionType[][],
+) => boolean;
 export interface SingleCascaderProps<OptionType extends BaseOptionType = DefaultOptionType>
   extends BaseCascaderProps<OptionType> {
   checkable?: false;
 
   onChange?: OnSingleChange<OptionType>;
+  beforeChange?: BeforeSingleChange<OptionType>;
 }
 
 export interface MultipleCascaderProps<OptionType extends BaseOptionType = DefaultOptionType>
@@ -127,6 +138,7 @@ export interface MultipleCascaderProps<OptionType extends BaseOptionType = Defau
   checkable: true | React.ReactNode;
 
   onChange?: OnMultipleChange<OptionType>;
+  beforeChange?: BeforeMultipleChange<OptionType>;
 }
 
 export type CascaderProps<OptionType extends BaseOptionType = DefaultOptionType> =
@@ -135,12 +147,16 @@ export type CascaderProps<OptionType extends BaseOptionType = DefaultOptionType>
 
 type InternalCascaderProps<OptionType extends BaseOptionType = DefaultOptionType> = Omit<
   SingleCascaderProps<OptionType> | MultipleCascaderProps<OptionType>,
-  'onChange'
+  'onChange' | 'beforeChange'
 > & {
   onChange?: (
     value: SingleValueType | SingleValueType[],
     selectOptions: OptionType[] | OptionType[][],
   ) => void;
+  beforeChange?: (
+    value: SingleValueType | SingleValueType[],
+    selectOptions: OptionType[] | OptionType[][],
+  ) => boolean;
 };
 
 export type CascaderRef = Omit<BaseSelectRef, 'scrollTo'>;
@@ -172,6 +188,7 @@ const Cascader = React.forwardRef<CascaderRef, InternalCascaderProps>((props, re
     defaultValue,
     value,
     changeOnSelect,
+    beforeChange = () => true,
     onChange,
     displayRender,
     checkable,
@@ -188,6 +205,7 @@ const Cascader = React.forwardRef<CascaderRef, InternalCascaderProps>((props, re
     options,
     dropdownPrefixCls,
     loadData,
+    limitedArray,
 
     // Open
     popupVisible,
@@ -310,21 +328,49 @@ const Cascader = React.forwardRef<CascaderRef, InternalCascaderProps>((props, re
   );
 
   // =========================== Change ===========================
+  const testFn = (obj: any, k: string) => {
+    let plainObj = {};
+    if (obj[k]) {
+      plainObj = obj[k];
+    } else {
+      obj[k] = plainObj;
+    }
+    return plainObj;
+  };
+
   const triggerChange = useRefFunc((nextValues: ValueType) => {
-    setRawValues(nextValues);
+    const nextRawValues = toRawValues(nextValues);
 
-    // Save perf if no need trigger event
-    if (onChange) {
-      const nextRawValues = toRawValues(nextValues);
+    const valueOptions = nextRawValues.map(valueCells =>
+      toPathOptions(valueCells, mergedOptions, mergedFieldNames).map(valueOpt => valueOpt.option),
+    );
 
-      const valueOptions = nextRawValues.map(valueCells =>
-        toPathOptions(valueCells, mergedOptions, mergedFieldNames).map(valueOpt => valueOpt.option),
-      );
-
-      const triggerValues = multiple ? nextRawValues : nextRawValues[0];
-      const triggerOptions = multiple ? valueOptions : valueOptions[0];
-
-      onChange(triggerValues, triggerOptions);
+    const triggerValues = multiple ? nextRawValues : nextRawValues[0];
+    const triggerOptions = multiple ? valueOptions : valueOptions[0];
+    if (beforeChange(triggerValues, triggerOptions)) {
+      setRawValues(nextValues);
+      const valueTree = {};
+      triggerValues.forEach(values => {
+        values.reduce((prev, next) => {
+          return testFn(prev, next);
+        }, valueTree);
+      });
+      // validateLimit(valueTree, [1, 1], )
+      // triggerOptions.forEach((selectedOptions) => {
+      //   if (selectedOptions && selectedOptions.length && selectedOptions.length > 0) {
+      //     selectedOptions.forEach((option) => {
+      //       if (option) {
+      //         console.log('option', option)
+      //         option.selectedValue = true
+      //       }
+      //     })
+      //   }
+      // })
+      // console.log('mergedOptions', mergedOptions)
+      // Save perf if no need trigger event
+      if (onChange) {
+        onChange(triggerValues, triggerOptions);
+      }
     }
   });
 
@@ -438,6 +484,7 @@ const Cascader = React.forwardRef<CascaderRef, InternalCascaderProps>((props, re
       expandIcon,
       loadingIcon,
       dropdownMenuColumnStyle,
+      limitedArray,
     }),
     [
       mergedOptions,
@@ -454,6 +501,7 @@ const Cascader = React.forwardRef<CascaderRef, InternalCascaderProps>((props, re
       expandIcon,
       loadingIcon,
       dropdownMenuColumnStyle,
+      limitedArray,
     ],
   );
 
@@ -471,7 +519,6 @@ const Cascader = React.forwardRef<CascaderRef, InternalCascaderProps>((props, re
       : {
           minWidth: 'auto',
         };
-
   return (
     <CascaderContext.Provider value={cascaderContext}>
       <BaseSelect

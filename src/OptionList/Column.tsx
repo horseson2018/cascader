@@ -21,6 +21,7 @@ export interface ColumnProps {
   halfCheckedSet: Set<React.Key>;
   loadingKeys: React.Key[];
   isSelectable: (option: DefaultOptionType) => boolean;
+  limitNum?: number;
 }
 
 export default function Column({
@@ -36,6 +37,7 @@ export default function Column({
   halfCheckedSet,
   loadingKeys,
   isSelectable,
+  limitNum,
 }: ColumnProps) {
   const menuPrefixCls = `${prefixCls}-menu`;
   const menuItemPrefixCls = `${prefixCls}-menu-item`;
@@ -49,13 +51,29 @@ export default function Column({
     dropdownMenuColumnStyle,
   } = React.useContext(CascaderContext);
 
+  let n = 0;
+  options.forEach(option => {
+    const value = option[fieldNames.value];
+    const searchOptions = option[SEARCH_MARK];
+    const fullPath = searchOptions
+      ? searchOptions.map(opt => opt[fieldNames.value])
+      : [...prevValuePath, value];
+    const fullPathKey = toPathKey(fullPath);
+    const checked = checkedSet.has(fullPathKey);
+
+    // >>>>> halfChecked
+    const halfChecked = halfCheckedSet.has(fullPathKey);
+    if (checked || halfChecked) {
+      n++;
+    }
+  });
+
   const hoverOpen = expandTrigger === 'hover';
 
   // ============================ Render ============================
   return (
     <ul className={menuPrefixCls} role="menu">
       {options.map(option => {
-        const { disabled } = option;
         const searchOptions = option[SEARCH_MARK];
         const label = option[fieldNames.label];
         const value = option[fieldNames.value];
@@ -74,7 +92,8 @@ export default function Column({
         const checked = checkedSet.has(fullPathKey);
 
         // >>>>> halfChecked
-        const halfChecked = halfCheckedSet.has(fullPathKey)
+        const halfChecked = halfCheckedSet.has(fullPathKey);
+        const disabled = option.disabled || (n >= limitNum && !checked && !halfChecked);
 
         // >>>>> Open
         const triggerOpenPath = () => {
@@ -85,7 +104,7 @@ export default function Column({
 
         // >>>>> Selection
         const triggerSelect = () => {
-          if (isSelectable(option)) {
+          if (isSelectable(option) && !disabled) {
             onSelect(fullPath, isMergedLeaf);
           }
         };

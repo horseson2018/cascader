@@ -29,6 +29,7 @@ const RefOptionList = React.forwardRef<RefOptionListProps>((props, ref) => {
     dropdownPrefixCls,
     loadData,
     expandTrigger,
+    limitedArray = [],
   } = React.useContext(CascaderContext);
 
   const mergedPrefixCls = dropdownPrefixCls || prefixCls;
@@ -186,6 +187,7 @@ const RefOptionList = React.forwardRef<RefOptionListProps>((props, ref) => {
       <Column
         key={index}
         {...columnProps}
+        limitNum={limitedArray[index]}
         prefixCls={mergedPrefixCls}
         options={col.options}
         prevValuePath={prevValuePath}

@@ -1,7 +1,7 @@
 {
-  "name": "rc-cascader",
-  "version": "3.0.0-alpha.3",
-  "description": "cascade select ui component for react",
+  "name": "rc-cascader-plus",
+  "version": "0.0.1",
+  "description": "based on rc-cascader@3.0.0-alpha.3",
   "keywords": [
     "react",
     "react-component",
@@ -11,14 +11,14 @@
     "cascade",
     "cascader"
   ],
-  "homepage": "https://github.com/react-component/cascader",
-  "author": "afc163@gmail.com",
+  "homepage": "https://github.com/horseson2018/cascader",
+  "author": "ljx151599@163.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/react-component/cascader.git"
+    "url": "https://github.com/horseson2018/cascader.git"
   },
   "bugs": {
-    "url": "https://github.com/react-component/cascader/issues"
+    "url": "https://github.com/horseson2018/cascader/issues"
   },
   "files": [
     "lib",
